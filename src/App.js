@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Trophy, Scissors, Timer, X, Play, Globe2, Star, BarChart3, 
   Sparkles, Loader2, Coins, Heart, Wand2, History, RotateCw, 
-  Settings2, ShieldCheck, ShoppingCart, Clock, 
-  Zap, Award // <--- Bu iki ikonu buraya ekle
+  Settings2, ShieldCheck, ShoppingCart, Clock, Zap, Award, 
+  DoorOpen, List
 } from 'lucide-react';
 
 // --- SABİTLER ---
@@ -39,9 +39,8 @@ const CATEGORIES_DATA = [
   { id: 'sanat', name: 'Sanat', icon: <Award size={20} /> }
 ];
 
-// --- API YARDIMCISI ---
 const fetchGemini = async (payload, retries = 3) => {
-  const apiKey = "BURAYA_KENDI_API_KEYINI_YAZ"; 
+  const apiKey = "BURAYA_API_KEY_EKLE"; 
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
@@ -59,7 +58,6 @@ const fetchGemini = async (payload, retries = 3) => {
 };
 
 export default function App() {
-  // --- STATE ---
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('quiz_master_v3_state');
     const defaultStats = {
@@ -104,7 +102,6 @@ export default function App() {
 
   const currentQuestion = gameQuestions[currentQuestionIndex];
 
-  // --- YARDIMCI FONKSİYONLAR ---
   const saveStats = useCallback((newStats) => {
     setStats(newStats);
     localStorage.setItem('quiz_master_v3_state', JSON.stringify(newStats));
@@ -127,7 +124,6 @@ export default function App() {
     });
   }, []);
 
-  // --- EFFECTLER ---
   useEffect(() => {
     const interval = setInterval(() => {
       updateHearts();
@@ -151,7 +147,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isTimerActive, timer, guaranteedScore]);
 
-  // --- OYUN MANTIĞI ---
   const resetQuestion = (index, data) => {
     setCurrentQuestionIndex(index);
     setTimer(data?.difficulty === 'zor' ? 15 : 20);
@@ -218,43 +213,32 @@ export default function App() {
     setIsAiLoading(true);
     try {
       const data = await fetchGemini({
-        contents: [{ parts: [{ text: `Soru: "${currentQuestion.question}". Cevabı söylemeden çok kısa bir ipucu ver.` }] }]
+        contents: [{ parts: [{ text: `Soru: "${currentQuestion.question}". Cevabı söylemeden kısa ipucu ver.` }] }]
       });
-      setAiHint(data?.candidates?.[0]?.content?.parts?.[0]?.text || "Bir şeyler ters gitti.");
+      setAiHint(data?.candidates?.[0]?.content?.parts?.[0]?.text || "İpucu alınamadı.");
       setUsedJokers([...usedJokers, 'ai']);
       saveStats({ ...stats, inventory: { ...stats.inventory, ai_joker: stats.inventory.ai_joker - 1 } });
-    } catch (e) { setAiHint("AI şu an meşgul!"); } finally { setIsAiLoading(false); }
+    } catch (e) { setAiHint("Bağlantı hatası!"); } finally { setIsAiLoading(false); }
   };
 
-  const buyItem = (type, cost) => {
-    if (stats.balance < cost) return;
-    const newInventory = { ...stats.inventory };
-    let newHearts = stats.hearts;
-    if (type === 'ai_joker') newInventory.ai_joker += 1;
-    if (type === 'heart') newHearts = Math.min(MAX_HEARTS, newHearts + 1);
-    saveStats({ ...stats, balance: stats.balance - cost, inventory: newInventory, hearts: newHearts });
-  };
-
-  // --- MODAL BİLEŞENİ ---
   const Modal = ({ title, onClose, children }) => (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
       <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
           <h3 className="text-xl font-black uppercase text-yellow-500">{title}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><X size={20} /></button>
         </div>
-        <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto text-white">{children}</div>
       </div>
     </div>
   );
 
-  // --- EKRANLAR ---
+  // --- RENDERING ---
 
   if (screen === 'home') {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center p-6 font-sans">
-        <div className="w-full max-w-md space-y-6">
-          {/* Header */}
+      <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center p-6 font-sans relative overflow-hidden">
+        <div className="w-full max-w-md space-y-6 z-10">
           <div className="flex justify-between items-center bg-slate-900/60 p-4 rounded-3xl border border-slate-800">
             <div className="flex flex-col">
               <div className="flex gap-1">
@@ -262,7 +246,7 @@ export default function App() {
                   <Heart key={i} size={18} className={i < stats.hearts ? "text-red-500 fill-red-500" : "text-slate-700"} />
                 ))}
               </div>
-              {nextHeartTime && <span className="text-[10px] text-slate-500 mt-1 font-bold">Yükleniyor: {nextHeartTime}</span>}
+              {nextHeartTime && <span className="text-[10px] text-slate-500 mt-1 font-bold">Yenileniyor: {nextHeartTime}</span>}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-yellow-500 font-black">
@@ -272,22 +256,20 @@ export default function App() {
             </div>
           </div>
 
-          {/* Profil */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-[2.5rem] border border-slate-800 shadow-xl">
             <div className="flex items-center gap-5">
               <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center text-3xl">{stats.avatar}</div>
               <div className="flex-1">
                 <h2 className="text-xl font-black uppercase">{stats.username}</h2>
                 <p className="text-yellow-500 text-xs font-bold uppercase">
-                  {RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name} (Seviye {stats.level})
+                  {RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name} (Lv. {stats.level})
                 </p>
               </div>
             </div>
           </div>
 
-          <h1 className="text-5xl font-black text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-yellow-600 italic py-4">QUİZ MASTER </h1>
+          <h1 className="text-5xl font-black text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-yellow-600 italic py-4">ODAK SÜPER GÜÇ</h1>
 
-          {/* Kategoriler */}
           <div className="grid grid-cols-4 gap-2">
             {CATEGORIES_DATA.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${selectedCategory === cat.id ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' : 'bg-slate-900/50 border-slate-800 text-slate-500'}`}>
@@ -300,32 +282,20 @@ export default function App() {
             {stats.hearts > 0 ? 'YARIŞMAYA BAŞLA' : 'CANIN BİTTİ'}
           </button>
 
-          {/* Alt Menü */}
           <div className="grid grid-cols-4 gap-3">
             <button onClick={() => setShowStats(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><BarChart3 size={20} className="text-blue-400" /><span className="text-[8px] mt-1 font-bold">STAT</span></button>
             <button onClick={() => setShowShop(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><ShoppingCart size={20} className="text-purple-400" /><span className="text-[8px] mt-1 font-bold">MARKET</span></button>
-            <button onClick={() => {}} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800 opacity-50 cursor-not-allowed"><RotateCw size={20} className="text-orange-400" /><span className="text-[8px] mt-1 font-bold">ÇARK</span></button>
             <button onClick={() => setShowHistory(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><History size={20} className="text-green-400" /><span className="text-[8px] mt-1 font-bold">GEÇMİŞ</span></button>
+            <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><Settings2 size={20} className="text-slate-400" /><span className="text-[8px] mt-1 font-bold">AYAR</span></button>
           </div>
         </div>
 
-        {/* Market Modal */}
         {showShop && (
           <Modal title="Market" onClose={() => setShowShop(false)}>
             <div className="space-y-3">
               <div className="flex justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                <div className="flex flex-col">
-                  <span className="font-bold">AI İpucu Joker</span>
-                  <span className="text-xs text-slate-500">Zekâ Küpü'nden yardım al.</span>
-                </div>
-                <button onClick={() => buyItem('ai_joker', 1000)} className="bg-yellow-500 text-black px-4 py-1 rounded-xl font-bold">1.000 G</button>
-              </div>
-              <div className="flex justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                <div className="flex flex-col">
-                  <span className="font-bold">Anında Can</span>
-                  <span className="text-xs text-slate-500">Yarışmaya geri dön.</span>
-                </div>
-                <button onClick={() => buyItem('heart', 2500)} className="bg-yellow-500 text-black px-4 py-1 rounded-xl font-bold">2.500 G</button>
+                <span>AI İpucu Joker</span>
+                <button onClick={() => { if(stats.balance >= 1000) saveStats({...stats, balance: stats.balance - 1000, inventory: {...stats.inventory, ai_joker: stats.inventory.ai_joker + 1}})}} className="bg-yellow-500 text-black px-4 py-1 rounded-xl font-bold">1.000 G</button>
               </div>
             </div>
           </Modal>
@@ -337,10 +307,9 @@ export default function App() {
   if (screen === 'quiz') {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col">
-        {/* Puan Ağacı */}
         <div className="p-4 flex gap-2 overflow-x-auto bg-slate-900 border-b border-slate-800 no-scrollbar">
            {REWARDS_LIST.map((r, i) => (
-             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${i === currentQuestionIndex ? 'bg-yellow-500 text-black scale-105' : i < currentQuestionIndex ? 'bg-green-900/30 text-green-500' : 'bg-slate-800 text-slate-400'}`}>
+             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap ${i === currentQuestionIndex ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}`}>
                {r.amount} PT
              </div>
            ))}
@@ -352,10 +321,10 @@ export default function App() {
            </div>
            
            <div className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 w-full max-w-3xl text-center shadow-2xl">
-              <h2 className="text-2xl md:text-3xl font-bold leading-tight">{currentQuestion?.question}</h2>
+              <h2 className="text-2xl font-bold">{currentQuestion?.question}</h2>
            </div>
 
-           {aiHint && <div className="bg-blue-900/20 text-blue-400 p-4 rounded-2xl border border-blue-800/50 italic text-sm animate-pulse">💡 {aiHint}</div>}
+           {aiHint && <div className="text-blue-400 italic text-sm animate-bounce">💡 {aiHint}</div>}
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
               {currentQuestion?.options.map((opt, i) => (
@@ -363,7 +332,7 @@ export default function App() {
                   key={i} 
                   onClick={() => handleAnswer(opt)}
                   disabled={isAnswered}
-                  className={`p-6 rounded-2xl border-2 font-bold text-lg transition-all active:scale-95 ${
+                  className={`p-6 rounded-2xl border-2 font-bold transition-all ${
                     isAnswered && opt === currentQuestion.answer ? 'bg-green-600 border-green-400' :
                     isAnswered && selectedOption === opt ? 'bg-red-600 border-red-400' :
                     'bg-slate-900 border-slate-800 hover:border-yellow-500'
@@ -375,10 +344,12 @@ export default function App() {
            </div>
            
            <div className="flex gap-4">
-             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || stats.inventory.ai_joker <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-full font-bold disabled:opacity-30">
+             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || stats.inventory.ai_joker <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-full font-bold">
                 <Sparkles size={18} /> AI ({stats.inventory.ai_joker})
              </button>
-             <button onClick={() => endGame(score, true)} className="text-slate-500 uppercase text-xs font-bold tracking-widest hover:text-white transition-colors">Çekil ve Puanı Al</button>
+             <button onClick={() => endGame(score, true)} className="flex items-center gap-2 bg-slate-800 px-6 py-3 rounded-full font-bold">
+                <DoorOpen size={18} /> Çekil
+             </button>
            </div>
         </div>
       </div>
@@ -392,7 +363,6 @@ export default function App() {
           <Trophy size={100} className="text-yellow-500 mx-auto mb-6 animate-bounce" />
           <h2 className="text-4xl font-black mb-2 italic">OYUN BİTTİ</h2>
           <div className="text-6xl font-black text-yellow-500 mb-8">{score.toLocaleString()} <span className="text-xl opacity-50">PT</span></div>
-          
           <div className="space-y-4">
             <button onClick={() => setScreen('home')} className="w-full py-5 bg-slate-800 rounded-2xl font-black hover:bg-slate-700">ANA MENÜ</button>
             <button onClick={startQuiz} className="w-full py-5 bg-yellow-500 text-black rounded-2xl font-black hover:bg-yellow-400">YENİDEN DENE</button>
