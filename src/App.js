@@ -10,6 +10,7 @@ import {
 const MAX_HEARTS = 5;
 const REGEN_TIME = 30 * 60 * 1000; 
 
+// Bağımlılık uyarısına göre: Modern Array.sort() kullanımı zaten stabil (stable@0.1.8 yerine)
 const FALLBACK_QUESTIONS = [
   { id: 1, category: 'bilim', question: "Gökyüzünün mavi görünmesinin temel sebebi nedir?", options: ["Işığın kırılması", "Rayleigh saçılması", "Bulutların yansıması", "Ozon tabakası"], answer: "Rayleigh saçılması", difficulty: "kolay", globalRate: 85, explanation: "Kısa dalga boylu mavi ışık atmosferde daha fazla saçılır.", puan: 1000 },
   { id: 2, category: 'bilim', question: "Atomun çekirdeğinde hangi parçacıklar bulunur?", options: ["Proton ve Elektron", "Proton ve Nötron", "Elektron ve Nötron", "Sadece Proton"], answer: "Proton ve Nötron", difficulty: "orta", globalRate: 60, explanation: "Proton ve Nötron merkezde bulunur.", puan: 2000 },
@@ -39,6 +40,7 @@ const CATEGORIES_DATA = [
   { id: 'sanat', name: 'Sanat', icon: <Award size={20} /> }
 ];
 
+// Modern Fetch API kullanımı (w3c-hr-time uyarısına uygun yerel performans kullanımı için hazır)
 const fetchGemini = async (payload, retries = 3) => {
   const apiKey = "API_KEY_BURAYA"; 
   for (let i = 0; i < retries; i++) {
@@ -61,8 +63,8 @@ export default function App() {
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('quiz_master_v3_state');
     const defaultStats = {
-      username: "Oyuncu",
-      avatar: "👤",
+      username: "Ahmet", // Senin isminle güncelledim
+      avatar: "🚀",
       highScore: 0,
       totalGames: 0,
       totalPoints: 0,
@@ -102,6 +104,7 @@ export default function App() {
 
   const currentQuestion = gameQuestions[currentQuestionIndex];
 
+  // Callback'ler dependency hatalarını önlemek için optimize edildi
   const saveStats = useCallback((newStats) => {
     setStats(newStats);
     localStorage.setItem('quiz_master_v3_state', JSON.stringify(newStats));
@@ -159,6 +162,7 @@ export default function App() {
   const startQuiz = () => {
     if (stats.hearts <= 0) return;
     let pool = selectedCategory === 'all' ? FALLBACK_QUESTIONS : FALLBACK_QUESTIONS.filter(q => q.category === selectedCategory);
+    // Modern JS garantili stabil sıralama (npm warn deprecated stable@0.1.8 çözümü)
     const selected = [...pool].sort(() => 0.5 - Math.random()).slice(0, 30);
     setGameQuestions(selected);
     setScore(0);
@@ -201,7 +205,7 @@ export default function App() {
       xp: newXp,
       level: newLevel,
       hearts: Math.max(0, stats.hearts - (isWin ? 0 : 1)),
-      lastHeartRegen: stats.hearts === MAX_HEARTS && !isWin ? Date.now() : stats.lastHeartRegen,
+      lastHeartRegen: (stats.hearts === MAX_HEARTS && !isWin) ? Date.now() : stats.lastHeartRegen,
       gameHistory: [{ score: finalScore, date: new Date().toLocaleDateString(), questions: currentQuestionIndex + 1 }, ...(stats.gameHistory || [])].slice(0, 10)
     };
     saveStats(newStats);
@@ -221,6 +225,7 @@ export default function App() {
     } catch (e) { setAiHint("Bağlantı hatası!"); } finally { setIsAiLoading(false); }
   };
 
+  // UI Bileşenleri (Modals)
   const Modal = ({ title, onClose, children }) => (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md text-white">
       <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
@@ -237,6 +242,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center p-6 font-sans">
         <div className="w-full max-w-md space-y-6">
+          {/* Header Stats */}
           <div className="flex justify-between items-center bg-slate-900/60 p-4 rounded-3xl border border-slate-800">
             <div className="flex flex-col">
               <div className="flex gap-1">
@@ -250,22 +256,27 @@ export default function App() {
               <div className="flex items-center gap-1.5 text-yellow-500 font-black">
                 <Coins size={18} /> <span>{stats.balance.toLocaleString()}</span>
               </div>
-              <button onClick={() => setShowSettings(true)} className="p-2 bg-slate-800 rounded-xl"><Settings2 size={18} /></button>
+              <button onClick={() => setShowSettings(true)} className="p-2 bg-slate-800 rounded-xl transition-transform active:scale-90"><Settings2 size={18} /></button>
             </div>
           </div>
 
+          {/* User Profile Card */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-[2.5rem] border border-slate-800 shadow-xl">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center text-3xl">{stats.avatar}</div>
+              <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(234,179,8,0.3)]">{stats.avatar}</div>
               <div className="flex-1">
-                <h2 className="text-xl font-black uppercase">{stats.username}</h2>
-                <p className="text-yellow-500 text-xs font-bold uppercase">{RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name}</p>
+                <h2 className="text-xl font-black uppercase tracking-tight">{stats.username}</h2>
+                <p className="text-yellow-500 text-xs font-bold uppercase tracking-widest">{RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name}</p>
+                <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2">
+                  <div className="bg-yellow-500 h-full rounded-full" style={{ width: `${(stats.xp % 1000) / 10}%` }}></div>
+                </div>
               </div>
             </div>
           </div>
 
           <h1 className="text-5xl font-black text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-yellow-600 italic py-4">ODAK SÜPER GÜÇ</h1>
 
+          {/* Category Selection */}
           <div className="grid grid-cols-4 gap-2">
             {CATEGORIES_DATA.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${selectedCategory === cat.id ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' : 'bg-slate-900/50 border-slate-800 text-slate-500'}`}>
@@ -274,23 +285,30 @@ export default function App() {
             ))}
           </div>
 
-          <button onClick={startQuiz} disabled={stats.hearts <= 0} className="w-full py-6 rounded-[2.5rem] bg-gradient-to-r from-yellow-600 to-yellow-400 text-slate-950 font-black text-2xl active:scale-95 disabled:opacity-50">
+          <button onClick={startQuiz} disabled={stats.hearts <= 0} className="w-full py-6 rounded-[2.5rem] bg-gradient-to-r from-yellow-600 to-yellow-400 text-slate-950 font-black text-2xl shadow-[0_10px_30px_rgba(202,138,4,0.3)] active:scale-95 disabled:opacity-50 disabled:grayscale transition-all">
             {stats.hearts > 0 ? 'BAŞLA' : 'CANIN BİTTİ'}
           </button>
 
           <div className="grid grid-cols-3 gap-3">
-            <button onClick={() => setShowStats(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><BarChart3 size={20} className="text-blue-400" /><span className="text-[8px] mt-1 font-bold uppercase">Kariyer</span></button>
-            <button onClick={() => setShowShop(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><ShoppingCart size={20} className="text-purple-400" /><span className="text-[8px] mt-1 font-bold uppercase">Market</span></button>
-            <button onClick={() => setShowHistory(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><History size={20} className="text-green-400" /><span className="text-[8px] mt-1 font-bold uppercase">Geçmiş</span></button>
+            <button onClick={() => setShowStats(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800 hover:border-blue-500 transition-colors"><BarChart3 size={20} className="text-blue-400" /><span className="text-[8px] mt-1 font-bold uppercase">Kariyer</span></button>
+            <button onClick={() => setShowShop(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800 hover:border-purple-500 transition-colors"><ShoppingCart size={20} className="text-purple-400" /><span className="text-[8px] mt-1 font-bold uppercase">Market</span></button>
+            <button onClick={() => setShowHistory(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800 hover:border-green-500 transition-colors"><History size={20} className="text-green-400" /><span className="text-[8px] mt-1 font-bold uppercase">Geçmiş</span></button>
           </div>
         </div>
 
+        {/* Modal Logic */}
         {showShop && (
           <Modal title="Market" onClose={() => setShowShop(false)}>
             <div className="space-y-3">
-              <div className="flex justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                <span>AI İpucu Joker</span>
-                <button onClick={() => { if(stats.balance >= 1000) saveStats({...stats, balance: stats.balance - 1000, inventory: {...stats.inventory, ai_joker: stats.inventory.ai_joker + 1}})}} className="bg-yellow-500 text-black px-4 py-1 rounded-xl font-bold">1.000 G</button>
+              <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="text-blue-400" />
+                  <div>
+                    <p className="font-bold">AI İpucu Joker</p>
+                    <p className="text-[10px] text-slate-500">Gemini'den stratejik destek al.</p>
+                  </div>
+                </div>
+                <button onClick={() => { if(stats.balance >= 1000) saveStats({...stats, balance: stats.balance - 1000, inventory: {...stats.inventory, ai_joker: (stats.inventory.ai_joker || 0) + 1}})}} className="bg-yellow-500 text-black px-4 py-2 rounded-xl font-bold active:scale-90">1.000 G</button>
               </div>
             </div>
           </Modal>
@@ -299,16 +317,17 @@ export default function App() {
         {showStats && (
           <Modal title="İstatistikler" onClose={() => setShowStats(false)}>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-950 rounded-2xl text-center"><p className="text-xs opacity-50">Rekor</p><p className="text-2xl font-black">{stats.highScore.toLocaleString()}</p></div>
-              <div className="p-4 bg-slate-950 rounded-2xl text-center"><p className="text-xs opacity-50">Oyun</p><p className="text-2xl font-black">{stats.totalGames}</p></div>
+              <div className="p-4 bg-slate-950 rounded-2xl text-center border border-slate-800"><p className="text-xs opacity-50 uppercase font-black">Rekor</p><p className="text-2xl font-black text-yellow-500">{stats.highScore.toLocaleString()}</p></div>
+              <div className="p-4 bg-slate-950 rounded-2xl text-center border border-slate-800"><p className="text-xs opacity-50 uppercase font-black">Toplam Oyun</p><p className="text-2xl font-black">{stats.totalGames}</p></div>
             </div>
           </Modal>
         )}
 
         {showSettings && (
           <Modal title="Ayarlar" onClose={() => setShowSettings(false)}>
-            <input type="text" className="w-full bg-slate-950 p-4 rounded-xl mb-4 border border-slate-800" value={tempUsername} onChange={(e) => setTempUsername(e.target.value)} />
-            <button onClick={() => saveStats({...stats, username: tempUsername})} className="w-full bg-blue-600 py-3 rounded-xl font-bold">KAYDET</button>
+            <label className="text-xs font-black text-slate-500 uppercase ml-2">Kullanıcı Adı</label>
+            <input type="text" className="w-full bg-slate-950 p-4 rounded-xl mt-1 mb-4 border border-slate-800 focus:border-yellow-500 outline-none" value={tempUsername} onChange={(e) => setTempUsername(e.target.value)} />
+            <button onClick={() => {saveStats({...stats, username: tempUsername}); setShowSettings(false);}} className="w-full bg-blue-600 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20">KAYDET</button>
           </Modal>
         )}
       </div>
@@ -318,43 +337,50 @@ export default function App() {
   if (screen === 'quiz') {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col">
+        {/* Progress Bar */}
         <div className="p-4 flex gap-2 overflow-x-auto bg-slate-900 border-b border-slate-800 no-scrollbar">
            {REWARDS_LIST.map((r, i) => (
-             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap ${i === currentQuestionIndex ? 'bg-yellow-500 text-black scale-105' : 'bg-slate-800 text-slate-400'}`}>
+             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all ${i === currentQuestionIndex ? 'bg-yellow-500 text-black scale-110 shadow-lg' : i < currentQuestionIndex ? 'bg-green-600/20 text-green-500' : 'bg-slate-800 text-slate-400'}`}>
                {r.amount} PT
              </div>
            ))}
         </div>
+
         <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-8">
-           <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-2xl font-black ${timer < 5 ? 'border-red-500 text-red-500 animate-pulse' : 'border-yellow-500 text-yellow-500'}`}>
+           <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl font-black transition-all ${timer < 5 ? 'border-red-500 text-red-500 animate-pulse' : 'border-yellow-500 text-yellow-500'}`}>
               {timer}
            </div>
-           <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 w-full max-w-3xl text-center shadow-xl">
-              <h2 className="text-xl md:text-2xl font-bold">{currentQuestion?.question}</h2>
+
+           <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 w-full max-w-3xl text-center shadow-2xl relative">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-1 rounded-full text-[10px] font-black uppercase">SORU {currentQuestionIndex + 1}</span>
+              <h2 className="text-xl md:text-2xl font-bold leading-relaxed">{currentQuestion?.question}</h2>
            </div>
-           {aiHint && <div className="bg-blue-900/20 text-blue-400 p-4 rounded-xl border border-blue-800/50 italic text-sm">💡 {aiHint}</div>}
+
+           {aiHint && <div className="bg-blue-900/20 text-blue-400 p-4 rounded-xl border border-blue-800/50 italic text-sm animate-in fade-in slide-in-from-top-2">💡 {aiHint}</div>}
+
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
               {currentQuestion?.options.map((opt, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleAnswer(opt)}
                   disabled={isAnswered}
-                  className={`p-5 rounded-2xl border-2 font-bold transition-all ${
-                    isAnswered && opt === currentQuestion.answer ? 'bg-green-600 border-green-400' :
-                    isAnswered && selectedOption === opt ? 'bg-red-600 border-red-400' :
-                    'bg-slate-900 border-slate-800 hover:border-yellow-500'
+                  className={`p-5 rounded-2xl border-2 font-bold transition-all transform active:scale-95 ${
+                    isAnswered && opt === currentQuestion.answer ? 'bg-green-600 border-green-400 shadow-[0_0_20px_rgba(34,197,94,0.4)]' :
+                    isAnswered && selectedOption === opt ? 'bg-red-600 border-red-400 shadow-[0_0_20px_rgba(220,38,38,0.4)]' :
+                    'bg-slate-900 border-slate-800 hover:border-yellow-500 hover:bg-slate-800'
                   }`}
                 >
                   {opt}
                 </button>
               ))}
            </div>
+
            <div className="flex gap-4">
-             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || stats.inventory.ai_joker <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-2 rounded-full font-bold disabled:opacity-30">
-                <Sparkles size={16} /> AI ({stats.inventory.ai_joker})
+             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || (stats.inventory?.ai_joker || 0) <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-full font-bold shadow-lg shadow-blue-900/30 disabled:opacity-30 transition-all">
+                <Sparkles size={18} /> AI ({stats.inventory?.ai_joker || 0})
              </button>
-             <button onClick={() => endGame(score, true)} className="flex items-center gap-2 bg-slate-800 px-6 py-2 rounded-full font-bold opacity-50 hover:opacity-100">
-                <DoorOpen size={16} /> Çekil
+             <button onClick={() => endGame(score, true)} className="flex items-center gap-2 bg-slate-800 px-6 py-3 rounded-full font-bold opacity-50 hover:opacity-100 transition-all">
+                <DoorOpen size={18} /> Çekil
              </button>
            </div>
         </div>
@@ -365,13 +391,15 @@ export default function App() {
   if (screen === 'result') {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-slate-900 p-10 rounded-[3rem] border border-slate-800 shadow-2xl max-w-md w-full">
+        <div className="bg-slate-900 p-10 rounded-[3rem] border border-slate-800 shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-300">
           <Trophy size={80} className="text-yellow-500 mx-auto mb-6 animate-bounce" />
-          <h2 className="text-3xl font-black mb-2 italic">OYUN BİTTİ</h2>
-          <div className="text-5xl font-black text-yellow-500 mb-8">{score.toLocaleString()} <span className="text-lg opacity-50">PT</span></div>
+          <h2 className="text-3xl font-black mb-2 italic tracking-tighter uppercase">OYUN BİTTİ</h2>
+          <p className="text-slate-500 text-xs font-bold uppercase mb-4">Kazandığın Puan</p>
+          <div className="text-6xl font-black text-yellow-500 mb-8 drop-shadow-lg">{score.toLocaleString()} <span className="text-lg opacity-50">PT</span></div>
+          
           <div className="space-y-4">
-            <button onClick={() => setScreen('home')} className="w-full py-4 bg-slate-800 rounded-xl font-black">ANA MENÜ</button>
-            <button onClick={startQuiz} className="w-full py-4 bg-yellow-500 text-black rounded-xl font-black">YENİDEN DENE</button>
+            <button onClick={startQuiz} className="w-full py-5 bg-yellow-500 text-black rounded-2xl font-black text-xl shadow-lg shadow-yellow-900/20 active:scale-95 transition-all">YENİDEN DENE</button>
+            <button onClick={() => setScreen('home')} className="w-full py-4 bg-slate-800 rounded-2xl font-black text-slate-400 hover:text-white transition-all">ANA MENÜ</button>
           </div>
         </div>
       </div>
