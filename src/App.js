@@ -3,7 +3,7 @@ import {
   Trophy, Scissors, Timer, X, Play, Globe2, Star, BarChart3, 
   Sparkles, Loader2, Coins, Heart, Wand2, History, RotateCw, 
   Settings2, ShieldCheck, ShoppingCart, Clock, Zap, Award, 
-  DoorOpen, List
+  DoorOpen
 } from 'lucide-react';
 
 // --- SABİTLER ---
@@ -40,7 +40,7 @@ const CATEGORIES_DATA = [
 ];
 
 const fetchGemini = async (payload, retries = 3) => {
-  const apiKey = "BURAYA_API_KEY_EKLE"; 
+  const apiKey = "API_KEY_BURAYA"; 
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
@@ -222,23 +222,21 @@ export default function App() {
   };
 
   const Modal = ({ title, onClose, children }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md text-white">
       <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
           <h3 className="text-xl font-black uppercase text-yellow-500">{title}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><X size={20} /></button>
         </div>
-        <div className="p-6 max-h-[70vh] overflow-y-auto text-white">{children}</div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );
 
-  // --- RENDERING ---
-
   if (screen === 'home') {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center p-6 font-sans relative overflow-hidden">
-        <div className="w-full max-w-md space-y-6 z-10">
+      <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center p-6 font-sans">
+        <div className="w-full max-w-md space-y-6">
           <div className="flex justify-between items-center bg-slate-900/60 p-4 rounded-3xl border border-slate-800">
             <div className="flex flex-col">
               <div className="flex gap-1">
@@ -246,7 +244,7 @@ export default function App() {
                   <Heart key={i} size={18} className={i < stats.hearts ? "text-red-500 fill-red-500" : "text-slate-700"} />
                 ))}
               </div>
-              {nextHeartTime && <span className="text-[10px] text-slate-500 mt-1 font-bold">Yenileniyor: {nextHeartTime}</span>}
+              {nextHeartTime && <span className="text-[10px] text-slate-500 mt-1 font-bold">Yeni can: {nextHeartTime}</span>}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-yellow-500 font-black">
@@ -261,9 +259,7 @@ export default function App() {
               <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center text-3xl">{stats.avatar}</div>
               <div className="flex-1">
                 <h2 className="text-xl font-black uppercase">{stats.username}</h2>
-                <p className="text-yellow-500 text-xs font-bold uppercase">
-                  {RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name} (Lv. {stats.level})
-                </p>
+                <p className="text-yellow-500 text-xs font-bold uppercase">{RANK_TITLES.filter(t => stats.level >= t.minLevel).pop()?.name}</p>
               </div>
             </div>
           </div>
@@ -279,14 +275,13 @@ export default function App() {
           </div>
 
           <button onClick={startQuiz} disabled={stats.hearts <= 0} className="w-full py-6 rounded-[2.5rem] bg-gradient-to-r from-yellow-600 to-yellow-400 text-slate-950 font-black text-2xl active:scale-95 disabled:opacity-50">
-            {stats.hearts > 0 ? 'YARIŞMAYA BAŞLA' : 'CANIN BİTTİ'}
+            {stats.hearts > 0 ? 'BAŞLA' : 'CANIN BİTTİ'}
           </button>
 
-          <div className="grid grid-cols-4 gap-3">
-            <button onClick={() => setShowStats(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><BarChart3 size={20} className="text-blue-400" /><span className="text-[8px] mt-1 font-bold">STAT</span></button>
-            <button onClick={() => setShowShop(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><ShoppingCart size={20} className="text-purple-400" /><span className="text-[8px] mt-1 font-bold">MARKET</span></button>
-            <button onClick={() => setShowHistory(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><History size={20} className="text-green-400" /><span className="text-[8px] mt-1 font-bold">GEÇMİŞ</span></button>
-            <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><Settings2 size={20} className="text-slate-400" /><span className="text-[8px] mt-1 font-bold">AYAR</span></button>
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => setShowStats(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><BarChart3 size={20} className="text-blue-400" /><span className="text-[8px] mt-1 font-bold uppercase">Kariyer</span></button>
+            <button onClick={() => setShowShop(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><ShoppingCart size={20} className="text-purple-400" /><span className="text-[8px] mt-1 font-bold uppercase">Market</span></button>
+            <button onClick={() => setShowHistory(true)} className="flex flex-col items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800"><History size={20} className="text-green-400" /><span className="text-[8px] mt-1 font-bold uppercase">Geçmiş</span></button>
           </div>
         </div>
 
@@ -300,6 +295,22 @@ export default function App() {
             </div>
           </Modal>
         )}
+        
+        {showStats && (
+          <Modal title="İstatistikler" onClose={() => setShowStats(false)}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-950 rounded-2xl text-center"><p className="text-xs opacity-50">Rekor</p><p className="text-2xl font-black">{stats.highScore.toLocaleString()}</p></div>
+              <div className="p-4 bg-slate-950 rounded-2xl text-center"><p className="text-xs opacity-50">Oyun</p><p className="text-2xl font-black">{stats.totalGames}</p></div>
+            </div>
+          </Modal>
+        )}
+
+        {showSettings && (
+          <Modal title="Ayarlar" onClose={() => setShowSettings(false)}>
+            <input type="text" className="w-full bg-slate-950 p-4 rounded-xl mb-4 border border-slate-800" value={tempUsername} onChange={(e) => setTempUsername(e.target.value)} />
+            <button onClick={() => saveStats({...stats, username: tempUsername})} className="w-full bg-blue-600 py-3 rounded-xl font-bold">KAYDET</button>
+          </Modal>
+        )}
       </div>
     );
   }
@@ -309,30 +320,26 @@ export default function App() {
       <div className="min-h-screen bg-[#020617] text-white flex flex-col">
         <div className="p-4 flex gap-2 overflow-x-auto bg-slate-900 border-b border-slate-800 no-scrollbar">
            {REWARDS_LIST.map((r, i) => (
-             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap ${i === currentQuestionIndex ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}`}>
+             <div key={i} className={`px-4 py-2 rounded-xl text-[10px] font-bold whitespace-nowrap ${i === currentQuestionIndex ? 'bg-yellow-500 text-black scale-105' : 'bg-slate-800 text-slate-400'}`}>
                {r.amount} PT
              </div>
            ))}
         </div>
-        
         <div className="flex-1 p-6 flex flex-col items-center justify-center space-y-8">
-           <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl font-black ${timer < 5 ? 'border-red-500 text-red-500 animate-pulse' : 'border-yellow-500 text-yellow-500'}`}>
+           <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-2xl font-black ${timer < 5 ? 'border-red-500 text-red-500 animate-pulse' : 'border-yellow-500 text-yellow-500'}`}>
               {timer}
            </div>
-           
-           <div className="bg-slate-900 p-8 rounded-[3rem] border border-slate-800 w-full max-w-3xl text-center shadow-2xl">
-              <h2 className="text-2xl font-bold">{currentQuestion?.question}</h2>
+           <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 w-full max-w-3xl text-center shadow-xl">
+              <h2 className="text-xl md:text-2xl font-bold">{currentQuestion?.question}</h2>
            </div>
-
-           {aiHint && <div className="text-blue-400 italic text-sm animate-bounce">💡 {aiHint}</div>}
-
+           {aiHint && <div className="bg-blue-900/20 text-blue-400 p-4 rounded-xl border border-blue-800/50 italic text-sm">💡 {aiHint}</div>}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
               {currentQuestion?.options.map((opt, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleAnswer(opt)}
                   disabled={isAnswered}
-                  className={`p-6 rounded-2xl border-2 font-bold transition-all ${
+                  className={`p-5 rounded-2xl border-2 font-bold transition-all ${
                     isAnswered && opt === currentQuestion.answer ? 'bg-green-600 border-green-400' :
                     isAnswered && selectedOption === opt ? 'bg-red-600 border-red-400' :
                     'bg-slate-900 border-slate-800 hover:border-yellow-500'
@@ -342,13 +349,12 @@ export default function App() {
                 </button>
               ))}
            </div>
-           
            <div className="flex gap-4">
-             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || stats.inventory.ai_joker <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-full font-bold">
-                <Sparkles size={18} /> AI ({stats.inventory.ai_joker})
+             <button onClick={callAiJoker} disabled={isAnswered || usedJokers.includes('ai') || stats.inventory.ai_joker <= 0} className="flex items-center gap-2 bg-blue-600 px-6 py-2 rounded-full font-bold disabled:opacity-30">
+                <Sparkles size={16} /> AI ({stats.inventory.ai_joker})
              </button>
-             <button onClick={() => endGame(score, true)} className="flex items-center gap-2 bg-slate-800 px-6 py-3 rounded-full font-bold">
-                <DoorOpen size={18} /> Çekil
+             <button onClick={() => endGame(score, true)} className="flex items-center gap-2 bg-slate-800 px-6 py-2 rounded-full font-bold opacity-50 hover:opacity-100">
+                <DoorOpen size={16} /> Çekil
              </button>
            </div>
         </div>
@@ -359,13 +365,13 @@ export default function App() {
   if (screen === 'result') {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-slate-900 p-12 rounded-[4rem] border border-slate-800 shadow-2xl max-w-md w-full">
-          <Trophy size={100} className="text-yellow-500 mx-auto mb-6 animate-bounce" />
-          <h2 className="text-4xl font-black mb-2 italic">OYUN BİTTİ</h2>
-          <div className="text-6xl font-black text-yellow-500 mb-8">{score.toLocaleString()} <span className="text-xl opacity-50">PT</span></div>
+        <div className="bg-slate-900 p-10 rounded-[3rem] border border-slate-800 shadow-2xl max-w-md w-full">
+          <Trophy size={80} className="text-yellow-500 mx-auto mb-6 animate-bounce" />
+          <h2 className="text-3xl font-black mb-2 italic">OYUN BİTTİ</h2>
+          <div className="text-5xl font-black text-yellow-500 mb-8">{score.toLocaleString()} <span className="text-lg opacity-50">PT</span></div>
           <div className="space-y-4">
-            <button onClick={() => setScreen('home')} className="w-full py-5 bg-slate-800 rounded-2xl font-black hover:bg-slate-700">ANA MENÜ</button>
-            <button onClick={startQuiz} className="w-full py-5 bg-yellow-500 text-black rounded-2xl font-black hover:bg-yellow-400">YENİDEN DENE</button>
+            <button onClick={() => setScreen('home')} className="w-full py-4 bg-slate-800 rounded-xl font-black">ANA MENÜ</button>
+            <button onClick={startQuiz} className="w-full py-4 bg-yellow-500 text-black rounded-xl font-black">YENİDEN DENE</button>
           </div>
         </div>
       </div>
